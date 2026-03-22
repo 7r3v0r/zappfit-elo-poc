@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZappFit — Simulate Class</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+  <style>
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 32px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px 10px 16px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      position: relative;
+    }
+
+    .step:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+    .step:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+
+    .step.active {
+      background: rgba(57,181,74,0.12);
+      border-color: var(--border-accent);
+      color: var(--accent);
+    }
+
+    .step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .step.active .step-num {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .step-divider {
+      width: 20px;
+      height: 1px;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+
+    .formula-box {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .formula-box .formula-accent { color: var(--accent); font-weight: 600; }
+    .formula-box .formula-label { color: var(--text-primary); font-weight: 600; }
+
+    .results-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .selection-count-bar {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── Navigation ──────────────────────────────────────────── -->
+<nav class="navbar">
+  <a href="index.html" class="nav-brand">
+    <div class="nav-logo">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    </div>
+    <div class="nav-brand-text">
+      <span class="brand-main">ZappFit</span>
+      <span class="brand-sub">Performance Tracker</span>
+    </div>
+  </a>
+
+  <div class="nav-links">
+    <a href="index.html" class="nav-link">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      <span>Leaderboard</span>
+    </a>
+    <a href="simulate.html" class="nav-link active">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      <span>Simulate Class</span>
+    </a>
+    <a href="profile.html" class="nav-link">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>My Profile</span>
+    </a>
+  </div>
+
+  <div class="nav-right">
+    <a href="profile.html?id=c03" class="nav-avatar" title="Jordan Blake — Your Profile" style="text-decoration:none;">
+      JB
+    </a>
+  </div>
+</nav>
+
+<!-- ─── Page ─────────────────────────────────────────────────── -->
+<main class="page-container">
+
+  <!-- Header -->
+  <div class="page-header">
+    <h1 class="page-title">Class Simulator</h1>
+    <p class="page-subtitle">Select participants, enter their scores, and run the ELO calculation to see how ratings would change.</p>
+  </div>
+
+  <!-- Steps -->
+  <div class="step-indicator animate-in stagger-1">
+    <div class="step active">
+      <div class="step-num">1</div>
+      Select Participants
+    </div>
+    <div class="step-divider"></div>
+    <div class="step">
+      <div class="step-num">2</div>
+      Enter Scores
+    </div>
+    <div class="step-divider"></div>
+    <div class="step">
+      <div class="step-num">3</div>
+      Run & Review
+    </div>
+    <div class="step-divider"></div>
+    <div class="step">
+      <div class="step-num">4</div>
+      Commit to Leaderboard
+    </div>
+  </div>
+
+  <!-- ─── Step 1: Select Participants ─── -->
+  <div class="animate-in stagger-2">
+    <div class="section-header">
+      <div class="section-title">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Step 1 — Select Participants
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button id="btn-select-all" class="btn btn-secondary btn-sm">Select All</button>
+        <button id="btn-clear-all" class="btn btn-secondary btn-sm">Clear</button>
+      </div>
+    </div>
+
+    <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:12px;">
+      Select 2–10 participants for this class session.
+    </div>
+
+    <div id="client-selector-grid" class="client-selector-grid">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- ─── Step 2: Score Entry ─── -->
+  <div id="score-inputs-section" style="display:none;" class="mt-24">
+    <div class="section-header">
+      <div class="section-title">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Step 2 — Enter Performance Scores
+      </div>
+      <button id="btn-random-scores" class="btn btn-secondary btn-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
+        Fill Random
+      </button>
+    </div>
+
+    <!-- Formula reference -->
+    <div class="formula-box mb-16" style="margin-bottom:16px;">
+      <span class="formula-label">Composite Score</span> =
+      <span class="formula-accent">(0.35 × Reps_pct)</span> +
+      <span class="formula-accent">(0.30 × Rounds_pct)</span> +
+      <span class="formula-accent">(0.20 × Weight_pct)</span> +
+      <span class="formula-accent">(0.15 × Calories_pct)</span>
+      &nbsp;·&nbsp;
+      <span style="color:var(--text-muted);font-size:0.75rem;">Percentiles are relative to other attendees in this session. Leave fields blank to exclude that metric.</span>
+    </div>
+
+    <div id="scores-grid" class="scores-grid">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- ─── Run Button ─── -->
+  <div class="mt-24" style="margin-top:24px;">
+    <div class="selection-count-bar">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent);"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span style="font-weight:600;">Ready to simulate?</span>
+        <span style="color:var(--text-secondary);font-size:0.85rem;" id="selected-count">0 selected</span>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <span style="font-size:0.8rem;color:var(--text-secondary);">Min 2 · Max 10 participants</span>
+        <button id="btn-run" class="btn btn-primary btn-lg" disabled>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Run Class
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Results ─── -->
+  <div id="results-section" style="display:none;margin-top:32px;">
+    <div class="section-header">
+      <div class="section-title">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Step 3 — Class Results
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <div style="font-size:0.8rem;color:var(--text-secondary);">Review before committing</div>
+        <button id="btn-commit" class="btn btn-primary" style="display:none;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Commit to Leaderboard
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:56px;">Rank</th>
+            <th>Athlete</th>
+            <th style="width:120px;">Composite</th>
+            <th style="width:110px;">ELO Change</th>
+            <th style="width:110px;">New ELO</th>
+          </tr>
+        </thead>
+        <tbody id="results-tbody">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- How ELO was calculated -->
+    <div style="margin-top:16px;padding:14px 18px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-md);font-size:0.8rem;color:var(--text-secondary);line-height:1.7;">
+      <span style="font-weight:600;color:var(--text-primary);">How ratings were calculated: </span>
+      Every participant was compared against every other participant in a round-robin. Each matchup uses
+      <span style="color:var(--accent);">E(A) = 1 / (1 + 10^((R_B - R_A) / 400))</span>,
+      with composite score rank determining win/loss/tie. All deltas are accumulated and applied simultaneously,
+      with a floor of <span style="color:var(--accent);">800</span>.
+    </div>
+  </div>
+
+</main>
+
+<div id="toast-container"></div>
+
+<script src="js/data.js"></script>
+<script src="js/elo.js"></script>
+<script src="js/simulate.js"></script>
+</body>
+</html>
