@@ -519,6 +519,92 @@ function updateClientAfterSession(client, newElo, composite, rankInClass) {
   return client;
 }
 
+// ─── CRUD: Athlete Management ───────────────────────────────────
+
+const AVATAR_COLORS = [
+  '#39B54A','#E63946','#457B9D','#F4A261','#A8DADC','#C77DFF',
+  '#FFB703','#06D6A0','#FB8500','#8338EC','#3A86FF','#FF006E',
+  '#FFBE0B','#2EC4B6','#E9C46A','#FF4D6D','#48CAE4','#80B918',
+];
+
+function generateId(clients) {
+  const nums = clients
+    .map(c => parseInt(c.id.replace('c', ''), 10))
+    .filter(n => !isNaN(n));
+  const max = nums.length ? Math.max(...nums) : 0;
+  return 'c' + String(max + 1).padStart(2, '0');
+}
+
+function getInitials(name) {
+  return name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+}
+
+function addClient(clients, { name, location, classType, joinDate, startingElo }) {
+  const id = generateId(clients);
+  const usedColors = new Set(clients.map(c => c.avatarColor));
+  const color = AVATAR_COLORS.find(c => !usedColors.has(c)) || AVATAR_COLORS[clients.length % AVATAR_COLORS.length];
+  const elo = Math.max(ELO_FLOOR, Math.min(2500, parseInt(startingElo) || ELO_START));
+
+  const client = {
+    id,
+    name: name.trim(),
+    initials: getInitials(name),
+    location: location || 'Downtown',
+    classType: classType || 'HIIT',
+    isYou: false,
+    joinDate: joinDate || new Date().toISOString().split('T')[0],
+    avatarColor: color,
+    elo,
+    prevElo: elo,
+    totalClasses: 0,
+    lastActive: new Date().toISOString().split('T')[0],
+    status: 'new',
+    kFactor: 40,
+    streak: 0,
+    bestRank: 999,
+    maxComposite: 0,
+    history: [],
+  };
+
+  clients.push(client);
+  return client;
+}
+
+function editClient(clients, id, changes) {
+  const client = clients.find(c => c.id === id);
+  if (!client) return null;
+
+  if (changes.name) {
+    client.name = changes.name.trim();
+    client.initials = getInitials(changes.name);
+  }
+  if (changes.location) client.location = changes.location;
+  if (changes.classType) client.classType = changes.classType;
+  if (changes.joinDate) client.joinDate = changes.joinDate;
+  if (changes.avatarColor) client.avatarColor = changes.avatarColor;
+  if (changes.isYou !== undefined) {
+    // Only one person can be "you" — clear others first
+    if (changes.isYou) clients.forEach(c => { c.isYou = false; });
+    client.isYou = changes.isYou;
+  }
+  // ELO override
+  if (changes.elo !== undefined) {
+    const newElo = Math.max(ELO_FLOOR, Math.min(2500, parseInt(changes.elo)));
+    if (!isNaN(newElo)) {
+      client.prevElo = client.elo;
+      client.elo = newElo;
+    }
+  }
+  return client;
+}
+
+function deleteClient(clients, id) {
+  const idx = clients.findIndex(c => c.id === id);
+  if (idx === -1) return false;
+  clients.splice(idx, 1);
+  return true;
+}
+
 // Export to global scope
 window.ZappData = {
   STORAGE_KEY,
@@ -531,4 +617,9 @@ window.ZappData = {
   getSortedLeaderboard,
   updateClientAfterSession,
   buildSeedData,
+  addClient,
+  editClient,
+  deleteClient,
+  getInitials,
+  AVATAR_COLORS,
 };

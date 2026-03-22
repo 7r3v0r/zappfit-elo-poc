@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZappFit — Manage Athletes</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+  <style>
+    /* ── Modal ─────────────────────────────────────────────── */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(4px);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .modal-backdrop.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 520px;
+      padding: 28px;
+      transform: translateY(16px);
+      transition: transform 0.2s ease;
+      position: relative;
+    }
+    .modal-backdrop.open .modal {
+      transform: translateY(0);
+    }
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      letter-spacing: 2px;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+    }
+    .modal-close {
+      position: absolute;
+      top: 16px; right: 16px;
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-secondary);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+    .modal-close:hover { color: var(--text-primary); border-color: var(--border-accent); }
+
+    /* ── Form grid ─────────────────────────────────────────── */
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .form-grid-2 .span-2 { grid-column: 1 / -1; }
+
+    /* ── Roster table overrides ────────────────────────────── */
+    .roster-table th, .roster-table td {
+      padding: 10px 14px;
+    }
+    .roster-table .action-cell {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .btn-icon {
+      width: 30px; height: 30px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+      clip-path: none;
+    }
+    .btn-icon:hover { border-color: var(--border-accent); color: var(--accent); }
+    .btn-icon.danger:hover { border-color: rgba(255,77,109,0.5); color: #FF4D6D; }
+
+    /* ── Avatar color picker ───────────────────────────────── */
+    .color-picker-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .color-swatch {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: var(--transition);
+      flex-shrink: 0;
+    }
+    .color-swatch.selected {
+      border-color: #fff;
+      transform: scale(1.2);
+    }
+
+    /* ── Inline edit row ───────────────────────────────────── */
+    .edit-row td { background: rgba(103,218,50,0.04) !important; }
+    .edit-row input, .edit-row select {
+      width: 100%;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      padding: 4px 8px;
+      font-size: 0.8rem;
+    }
+
+    /* ── ELO override badge ────────────────────────────────── */
+    .elo-override-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.68rem;
+      background: rgba(255,107,53,0.12);
+      border: 1px solid rgba(255,107,53,0.3);
+      color: var(--warning);
+      padding: 2px 7px;
+      border-radius: 20px;
+      margin-left: 4px;
+    }
+
+    /* ── Status chip ───────────────────────────────────────── */
+    .status-chip {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .status-established { background: rgba(103,218,50,0.12); color: var(--accent); border: 1px solid rgba(103,218,50,0.25); }
+    .status-provisional  { background: rgba(255,183,3,0.12); color: #FFB703; border: 1px solid rgba(255,183,3,0.25); }
+    .status-new          { background: rgba(255,255,255,0.06); color: var(--text-secondary); border: 1px solid var(--border); }
+
+    /* ── Confirm delete overlay ────────────────────────────── */
+    .confirm-delete-bar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: rgba(255,77,109,0.08);
+      border: 1px solid rgba(255,77,109,0.3);
+      border-radius: var(--radius-sm);
+      margin-top: 4px;
+      font-size: 0.82rem;
+    }
+    .confirm-delete-bar.visible { display: flex; }
+  </style>
+</head>
+<body>
+
+<!-- ─── Navigation ──────────────────────────────────────────── -->
+<nav class="navbar">
+  <a href="index.html" class="nav-brand">
+    <div class="nav-logo">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    </div>
+    <div class="nav-brand-text">
+      <span class="brand-main">ZappFit</span>
+      <span class="brand-sub">Performance Tracker</span>
+    </div>
+  </a>
+
+  <div class="nav-links">
+    <a href="index.html" class="nav-link">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      <span>Leaderboard</span>
+    </a>
+    <a href="simulate.html" class="nav-link">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      <span>Simulate Class</span>
+    </a>
+    <a href="profile.html" class="nav-link">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>My Profile</span>
+    </a>
+    <a href="admin.html" class="nav-link active">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span>Athletes</span>
+    </a>
+  </div>
+
+  <div class="nav-right">
+    <a href="profile.html?id=c03" class="nav-avatar" title="Jordan Blake — Your Profile" style="text-decoration:none;">
+      JB
+    </a>
+  </div>
+</nav>
+
+<!-- ─── Page ─────────────────────────────────────────────────── -->
+<main class="page-container">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+      <div>
+        <h1 class="page-title">Athlete Management</h1>
+        <p class="page-subtitle">Add, edit, or remove athletes. Override ELO ratings for manual corrections.</p>
+      </div>
+      <button id="btn-add-athlete" class="btn btn-primary">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Athlete
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stat-grid animate-in stagger-1">
+    <div class="stat-card">
+      <div class="stat-label">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        Total Athletes
+      </div>
+      <div class="stat-value stat-accent" id="stat-total">—</div>
+      <div class="stat-meta">All statuses</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
+        Ranked
+      </div>
+      <div class="stat-value" id="stat-ranked">—</div>
+      <div class="stat-meta">≥ 5 classes</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Top ELO
+      </div>
+      <div class="stat-value stat-gold" id="stat-top">—</div>
+      <div class="stat-meta" id="stat-top-name">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Avg ELO
+      </div>
+      <div class="stat-value" id="stat-avg">—</div>
+      <div class="stat-meta">Across all athletes</div>
+    </div>
+  </div>
+
+  <!-- Search + Filter bar -->
+  <div class="animate-in stagger-2" style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+    <div style="position:relative;flex:1;min-width:200px;max-width:340px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="roster-search" type="text" placeholder="Search athletes…"
+        style="width:100%;padding:9px 10px 9px 32px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--text-primary);font-size:0.85rem;outline:none;transition:var(--transition);"
+        onfocus="this.style.borderColor='var(--border-accent)'" onblur="this.style.borderColor='var(--border)'">
+    </div>
+    <div id="filter-status-bar" style="display:flex;gap:6px;">
+      <button class="chip active" data-status="all">All</button>
+      <button class="chip" data-status="established">Established</button>
+      <button class="chip" data-status="provisional">Provisional</button>
+      <button class="chip" data-status="new">New</button>
+    </div>
+  </div>
+
+  <!-- Roster Table -->
+  <div class="animate-in stagger-3">
+    <div class="table-wrapper">
+      <table class="roster-table">
+        <thead>
+          <tr>
+            <th style="width:42px;"></th>
+            <th>Athlete</th>
+            <th style="width:110px;">Location</th>
+            <th style="width:100px;">Class Type</th>
+            <th style="width:90px;">Status</th>
+            <th style="width:80px;">ELO</th>
+            <th style="width:70px;">Classes</th>
+            <th style="width:100px;">Joined</th>
+            <th style="width:100px;text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="roster-tbody">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+    <div id="empty-state" style="display:none;text-align:center;padding:48px;color:var(--text-muted);font-size:0.875rem;">
+      No athletes match your search.
+    </div>
+  </div>
+
+  <!-- Delete confirm bar -->
+  <div id="confirm-delete-bar" class="confirm-delete-bar mt-16">
+    <span>Delete <strong id="delete-name"></strong>? This cannot be undone.</span>
+    <div style="display:flex;gap:8px;">
+      <button id="btn-confirm-delete" class="btn btn-sm" style="background:#FF4D6D;color:#fff;">Delete</button>
+      <button id="btn-cancel-delete" class="btn btn-secondary btn-sm">Cancel</button>
+    </div>
+  </div>
+
+</main>
+
+<!-- ─── Add / Edit Modal ─────────────────────────────────────── -->
+<div id="athlete-modal" class="modal-backdrop">
+  <div class="modal">
+    <button class="modal-close" id="modal-close" title="Close">✕</button>
+    <div class="modal-title" id="modal-title">ADD ATHLETE</div>
+
+    <div class="form-grid-2">
+      <div class="form-group span-2">
+        <label class="form-label">Full Name *</label>
+        <input id="f-name" type="text" class="form-input" placeholder="e.g. Alex Johnson" maxlength="40">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Location</label>
+        <select id="f-location" class="form-input">
+          <option value="Downtown">Downtown</option>
+          <option value="Westside">Westside</option>
+          <option value="Northgate">Northgate</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Class Type</label>
+        <select id="f-classtype" class="form-input">
+          <option value="HIIT">HIIT</option>
+          <option value="Strength">Strength</option>
+          <option value="CrossFit">CrossFit</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Join Date</label>
+        <input id="f-joindate" type="date" class="form-input">
+      </div>
+      <div class="form-group" id="elo-field-wrap">
+        <label class="form-label">Starting ELO</label>
+        <input id="f-elo" type="number" class="form-input" placeholder="1200" min="800" max="2500">
+      </div>
+      <div class="form-group span-2">
+        <label class="form-label" style="margin-bottom:6px;">Avatar Color</label>
+        <div class="color-picker-grid" id="color-picker"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+      <button id="modal-cancel" class="btn btn-secondary">Cancel</button>
+      <button id="modal-save" class="btn btn-primary">Save Athlete</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="js/data.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

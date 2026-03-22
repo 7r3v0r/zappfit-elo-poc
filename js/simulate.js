@@ -9,13 +9,28 @@
   let allClients = [];
   let selectedIds = new Set();
   let lastResults = null;
+  let participantSearch = '';
 
   // ─── Init ────────────────────────────────────────────────
   function init() {
     allClients = ZappData.loadData();
+    // Pre-fill today's date in session date field
+    const dateEl = document.getElementById('session-date');
+    if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
+
     renderClientSelector();
     bindEvents();
+    setStep(1);
     if (window.lucide) lucide.createIcons();
+  }
+
+  // ─── Step Indicator ──────────────────────────────────────
+  function setStep(n) {
+    document.querySelectorAll('#step-indicator .step').forEach(el => {
+      const s = parseInt(el.getAttribute('data-step'), 10);
+      el.classList.toggle('active', s === n);
+      el.classList.toggle('step-done', s < n);
+    });
   }
 
   // ─── Client Selector ─────────────────────────────────────
@@ -23,12 +38,24 @@
     const grid = document.getElementById('client-selector-grid');
     grid.innerHTML = '';
 
-    allClients.forEach(client => {
+    const q = participantSearch.toLowerCase();
+    const visible = allClients.filter(c =>
+      !q || c.name.toLowerCase().includes(q) || c.location.toLowerCase().includes(q) || c.classType.toLowerCase().includes(q)
+    );
+
+    if (visible.length === 0) {
+      grid.innerHTML = '<div style="grid-column:1/-1;color:var(--text-muted);font-size:0.85rem;padding:12px 0;">No athletes match your search.</div>';
+      return;
+    }
+
+    visible.forEach(client => {
       const card = document.createElement('label');
       card.className = 'client-check-card';
       card.setAttribute('data-id', client.id);
+      const isSelected = selectedIds.has(client.id);
+      if (isSelected) card.classList.add('selected');
       card.innerHTML = `
-        <input type="checkbox" value="${client.id}" class="client-checkbox">
+        <input type="checkbox" value="${client.id}" class="client-checkbox" ${isSelected ? 'checked' : ''}>
         <div class="avatar" style="background:${client.avatarColor};color:#fff;font-size:0.7rem;">${client.initials}</div>
         <div class="client-check-info">
           <div class="client-check-name">${client.name}</div>
@@ -68,10 +95,12 @@
 
     if (selectedIds.size < 2) {
       container.style.display = 'none';
+      setStep(1);
       return;
     }
 
     container.style.display = 'block';
+    setStep(2);
     grid.innerHTML = '';
 
     Array.from(selectedIds).forEach(id => {
@@ -129,6 +158,14 @@
     document.getElementById('btn-select-all').addEventListener('click', selectAll);
     document.getElementById('btn-clear-all').addEventListener('click', clearAll);
     document.getElementById('btn-random-scores').addEventListener('click', fillRandomScores);
+
+    const searchEl = document.getElementById('participant-search');
+    if (searchEl) {
+      searchEl.addEventListener('input', function () {
+        participantSearch = this.value;
+        renderClientSelector();
+      });
+    }
   }
 
   function selectAll() {
@@ -158,6 +195,7 @@
     // Hide results
     const resultsSection = document.getElementById('results-section');
     if (resultsSection) resultsSection.style.display = 'none';
+    setStep(1);
   }
 
   function fillRandomScores() {
@@ -196,6 +234,7 @@
         const results = ELO.processSession(participants);
         lastResults = results;
         renderResults(results);
+        setStep(3);
         showToast('Simulation complete!', 'success');
       } catch(e) {
         console.error(e);
@@ -351,6 +390,7 @@
       `;
       btn.parentNode.appendChild(notice);
 
+      setStep(4);
       showToast('ELO ratings updated and saved!', 'success');
 
       // Refresh client selector data

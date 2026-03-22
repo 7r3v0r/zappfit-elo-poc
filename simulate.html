@@ -60,6 +60,24 @@
       color: #fff;
     }
 
+    .step.step-done {
+      background: rgba(103,218,50,0.05);
+      border-color: rgba(103,218,50,0.15);
+      color: var(--text-muted);
+    }
+
+    .step.step-done .step-num {
+      background: rgba(103,218,50,0.2);
+      color: var(--accent);
+      font-size: 0;
+    }
+
+    .step.step-done .step-num::after {
+      content: '✓';
+      font-size: 0.72rem;
+      color: var(--accent);
+    }
+
     .step-divider {
       width: 20px;
       height: 1px;
@@ -130,6 +148,10 @@
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       <span>My Profile</span>
     </a>
+    <a href="admin.html" class="nav-link">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span>Athletes</span>
+    </a>
   </div>
 
   <div class="nav-right">
@@ -149,25 +171,48 @@
   </div>
 
   <!-- Steps -->
-  <div class="step-indicator animate-in stagger-1">
-    <div class="step active">
+  <div class="step-indicator animate-in stagger-1" id="step-indicator">
+    <div class="step active" data-step="1">
       <div class="step-num">1</div>
       Select Participants
     </div>
     <div class="step-divider"></div>
-    <div class="step">
+    <div class="step" data-step="2">
       <div class="step-num">2</div>
       Enter Scores
     </div>
     <div class="step-divider"></div>
-    <div class="step">
+    <div class="step" data-step="3">
       <div class="step-num">3</div>
       Run & Review
     </div>
     <div class="step-divider"></div>
-    <div class="step">
+    <div class="step" data-step="4">
       <div class="step-num">4</div>
       Commit to Leaderboard
+    </div>
+  </div>
+
+  <!-- Session Metadata -->
+  <div class="animate-in stagger-1" id="session-meta-section" style="margin-bottom:24px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;flex-wrap:wrap;">
+      <div class="form-group" style="margin:0;">
+        <label class="form-label">Session Name <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+        <input id="session-name" type="text" class="form-input" placeholder="e.g. Monday Morning HIIT" maxlength="60">
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label class="form-label">Class Date</label>
+        <input id="session-date" type="date" class="form-input">
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label class="form-label">Class Type</label>
+        <select id="session-type" class="form-input">
+          <option value="HIIT">HIIT</option>
+          <option value="Strength">Strength</option>
+          <option value="CrossFit">CrossFit</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
     </div>
   </div>
 
@@ -184,8 +229,14 @@
       </div>
     </div>
 
-    <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:12px;">
-      Select 2–10 participants for this class session.
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+      <span style="font-size:0.8rem;color:var(--text-secondary);">Select 2–10 participants for this class session.</span>
+      <div style="position:relative;flex:1;min-width:160px;max-width:260px;margin-left:auto;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="participant-search" type="text" placeholder="Search…"
+          style="width:100%;padding:7px 9px 7px 28px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:0.8rem;outline:none;transition:var(--transition);"
+          onfocus="this.style.borderColor='var(--border-accent)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
     </div>
 
     <div id="client-selector-grid" class="client-selector-grid">
